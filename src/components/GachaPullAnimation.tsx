@@ -16,6 +16,8 @@ interface GachaPullAnimationProps {
   onReSummon?: (count: number) => void;
   gems: number;
   tickets: number;
+  isAuto?: boolean;
+  onStopAuto?: () => void;
 }
 
 export const GachaPullAnimation: React.FC<GachaPullAnimationProps> = ({
@@ -24,6 +26,8 @@ export const GachaPullAnimation: React.FC<GachaPullAnimationProps> = ({
   onReSummon,
   gems,
   tickets,
+  isAuto = false,
+  onStopAuto,
 }) => {
   const [phase, setPhase] = useState<"portal" | "reveal" | "summary">("portal");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -31,6 +35,7 @@ export const GachaPullAnimation: React.FC<GachaPullAnimationProps> = ({
   const [historyOfFlips, setHistoryOfFlips] = useState<{ character: Character; isNew: boolean; flipped: boolean }[]>(
     results.map((r) => ({ ...r, flipped: false }))
   );
+  const [autoCountdown, setAutoCountdown] = useState<number>(2); // 2秒のカウントダウン（スキップテンポ改善）
 
   // Find the highest rarity in the summon results to drive the connection screen loading effect
   const getHighestRarityInResults = (): Rarity => {
@@ -101,17 +106,59 @@ export const GachaPullAnimation: React.FC<GachaPullAnimationProps> = ({
 
   // Portal automatic transition
   useEffect(() => {
+    const duration = isAuto ? 1000 : 1800; // オート時は1.0秒に短縮
     const timer = setTimeout(() => {
       setPhase((currentPhase) => {
         if (currentPhase === "portal") {
+          if (isAuto) {
+            // オート時は個別カードめくりをスキップして即サマリーへ
+            const updated = historyOfFlips.map((item) => ({ ...item, flipped: true }));
+            setHistoryOfFlips(updated);
+            playCoin();
+            return "summary";
+          }
           triggerCardReveal(0);
           return "reveal";
         }
         return currentPhase;
       });
-    }, 1800); // 1.8s portal opening swirl
+    }, duration);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isAuto]);
+
+  // オート連続召喚のループ制御・カウントダウン処理
+  const hasUR = results.some(r => r.character.rarity === Rarity.UR);
+  const canAffordNext = results.length === 1 
+    ? (tickets >= 1 || gems >= 150)
+    : (tickets >= 10 || gems >= 1500);
+
+  useEffect(() => {
+    if (!isAuto || phase !== "summary") return;
+
+    if (hasUR) {
+      // URが排出されたので即時オート停止
+      onStopAuto?.();
+      return;
+    }
+
+    if (!canAffordNext) {
+      // リソース不足でオート停止
+      onStopAuto?.();
+      return;
+    }
+
+    if (autoCountdown > 0) {
+      const timer = setTimeout(() => {
+        setAutoCountdown((prev) => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      // カウントダウンが0になったら次の召喚を自動でキック！
+      if (onReSummon) {
+        onReSummon(results.length);
+      }
+    }
+  }, [isAuto, phase, autoCountdown, hasUR, canAffordNext]);
 
   const triggerCardReveal = (index: number) => {
     setIsFlipped(false);
@@ -487,6 +534,63 @@ export const GachaPullAnimation: React.FC<GachaPullAnimationProps> = ({
               })}
             </div>
 
+            {/* Auto Summon Actions & Badges */}
+            {isAuto && (
+              <div className="mt-6 p-4 rounded-xl border border-emerald-500/20 bg-emerald-950/20 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in text-left">
+                <div className="flex items-center gap-3">
+                  <div className="relative shrink-0">
+                    <div className="absolute inset-0 bg-emerald-500/10 blur-xl rounded-full scale-150 animate-pulse" />
+                    <Sparkles className="w-5 h-5 text-emerald-400 animate-pulse" />
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-xs text-emerald-300">自動連続召喚（10連ループ）が稼働中</h5>
+                    <p className="text-[10px] text-emerald-400/80 mt-0.5">
+                      {autoCountdown > 0 ? (
+                        <>あと <strong className="text-white text-xs font-mono">{autoCountdown}</strong> 秒で次の10羽を自動的に召喚します（リソース消費あり）</>
+                      ) : (
+                        <>まもなく時空を拡張し、次の召喚を開始します...</>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  id="stop-auto-summon-animation-btn"
+                  onClick={() => {
+                    onStopAuto?.();
+                  }}
+                  className="px-6 py-2 bg-red-650 hover:bg-red-500 text-white font-bold text-xs rounded-lg transition duration-150 shadow-md shadow-red-950/20 cursor-pointer animate-pulse shrink-0"
+                >
+                  自動召喚を停止
+                </button>
+              </div>
+            )}
+
+            {/* UR Pull Protection Alert when autoplay is stopped by UR pull */}
+            {!isAuto && hasUR && (
+              <div className="mt-6 p-4 rounded-xl border border-amber-500/30 bg-amber-950/20 flex items-center gap-3 animate-in slide-in-from-bottom duration-300 text-left">
+                <Trophy className="w-6 h-6 text-yellow-500 shrink-0 animate-bounce" />
+                <div>
+                  <h5 className="font-bold text-xs text-amber-300">極大共鳴反応（UR排出）により召喚を安全に停止しました！</h5>
+                  <p className="text-[10px] text-amber-400/80 mt-0.5">
+                    おめでとうございます！極めて強力なURクラスの星霊（鳥）が具現化されたため、リソースを安全に管理できるよう、自動連続召喚プロセスを停止（セーフティロック）しました。
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Currency depletion protection alert */}
+            {!isAuto && !hasUR && !canAffordNext && (
+              <div className="mt-6 p-4 rounded-xl border border-red-500/20 bg-red-950/10 flex items-center gap-3 text-left">
+                <Zap className="w-5 h-5 text-red-400 shrink-0" />
+                <div>
+                  <h5 className="font-bold text-xs text-red-300">リソース不足により自動召喚停止</h5>
+                  <p className="text-[10px] text-red-400/70 mt-0.5">
+                    所持しているチケットおよびジェムが、次の10回連続召喚を実行する残高に満たないため、自動プロセスが安全に完了しました。
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Footer Buttons */}
             {(() => {
               const count = results.length;
@@ -498,24 +602,29 @@ export const GachaPullAnimation: React.FC<GachaPullAnimationProps> = ({
                 : (tickets >= 10 ? "🎟️ x10" : "💎 x1500");
               return (
                 <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
-                  <button
-                    onClick={onComplete}
-                    className="py-3 px-8 bg-neutral-800 hover:bg-neutral-700 text-white font-bold rounded-lg shadow-lg active:scale-95 duration-150 transition border border-neutral-700 w-full sm:w-auto cursor-pointer"
-                  >
-                    召喚完了 (Back to Portal)
-                  </button>
-                  <button
-                    disabled={!canAfford}
-                    onClick={() => onReSummon && onReSummon(count)}
-                    className={`py-3 px-8 font-bold rounded-lg shadow-lg active:scale-95 duration-150 transition flex items-center justify-center gap-2 w-full sm:w-auto ${
-                      canAfford
-                        ? "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-neutral-900 font-extrabold cursor-pointer"
-                        : "bg-neutral-900 text-neutral-500 border border-neutral-850 cursor-not-allowed opacity-50"
-                    }`}
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    もう一度{count}回召喚 ({costLabel})
-                  </button>
+                  {/* オート停止中または最初からオートではない時のみ、閉じる・再度召喚を表示 */}
+                  {(!isAuto || hasUR || !canAffordNext) && (
+                    <>
+                      <button
+                        onClick={onComplete}
+                        className="py-3 px-8 bg-neutral-800 hover:bg-neutral-700 text-white font-bold rounded-lg shadow-lg active:scale-95 duration-150 transition border border-neutral-700 w-full sm:w-auto cursor-pointer text-xs"
+                      >
+                        召喚完了 (Back to Portal)
+                      </button>
+                      <button
+                        disabled={!canAfford}
+                        onClick={() => onReSummon && onReSummon(count)}
+                        className={`py-3 px-8 font-bold rounded-lg shadow-lg active:scale-95 duration-150 transition flex items-center justify-center gap-2 w-full sm:w-auto text-xs ${
+                          canAfford
+                            ? "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-neutral-900 font-extrabold cursor-pointer"
+                            : "bg-neutral-900 text-neutral-500 border border-neutral-850 cursor-not-allowed opacity-50"
+                        }`}
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        もう一度{count}回召喚 ({costLabel})
+                      </button>
+                    </>
+                  )}
                 </div>
               );
             })()}

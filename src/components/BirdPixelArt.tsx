@@ -1272,6 +1272,181 @@ const BIRD_STYLES: Record<string, {
     sub: "#f8fafc",       // 純白の胸
     beak: "#facc15",      // 黄色く引き締まったアイリングと鼻
     special: "#1e293b"    // ハヤブサ特有のトレードマーク「髭（チーク）」
+  },
+  "C101": { // ルリビタキ (瑠璃色の至宝)
+    template: TEMP_NORMAL,
+    main: "#2563eb",      // サファイアコバルトブルー
+    sub: "#ffffff",       // 純白のお腹
+    beak: "#1e293b",      // 黒いクチバシ
+    special: "#f97316"    // 鮮やかなオレンジの脇
+  },
+  "C102": { // マガモ (アオクビの代表)
+    template: TEMP_LONG_BEAK,
+    main: "#15803d",      // 輝くグリーンの頭部
+    sub: "#57534e",       // 渋いブラウングレーの胴
+    beak: "#eab308",      // 鮮やかな黄色クチバシ
+    special: "#3b82f6"    // 翼に入る青いストライプ（翼鏡）
+  },
+  "C103": { // ユリカモメ (朱の渡り鳥)
+    template: TEMP_NORMAL,
+    main: "#f8fafc",      // 清らかな純白ボディ
+    sub: "#cbd5e1",       // ソフトグレーの翼端
+    beak: "#dc2626",      // 漆塗りのような深く紅い口ばし
+    special: "#ef4444"    // 紅い脚
+  },
+  "C104": { // ハクセキレイ (アスファルトのランナー)
+    template: TEMP_NORMAL,
+    main: "#0f172a",      // 黒い背中とよだれかけ
+    sub: "#ffffff",       // 純白の顔とお腹
+    beak: "#0f172a",      // まっ黒なクチバシ
+    special: "#64748b"    // スレートグレーの翼羽
+  },
+  "C105": { // ツグミ (静止の美)
+    template: TEMP_NORMAL,
+    main: "#78350f",      // 豊かな赤褐色
+    sub: "#fef08a",       // スポットが入る淡クリームの胸
+    beak: "#eab308",      // 黄色の入る可愛いクチバシ
+    special: "#fed7aa"    // オレンジの翼の一部
+  },
+  "C106": { // アオゲラ (日本固有の緑啄木鳥)
+    template: TEMP_RAPTOR,
+    main: "#4d7c0f",      // オリーブグリーンの森林色
+    sub: "#f1f5f9",       // 班の入るお腹
+    beak: "#64748b",      // 頑強なクチバシ
+    special: "#dc2626"    // 真ん赤な帽子と髭部
+  },
+  "C107": { // ミコアイサ (巫女秋沙・パンダガモ)
+    template: TEMP_LONG_BEAK,
+    main: "#f8fafc",      // 巫女の白衣のごとき純白
+    sub: "#0f172a",       // 目の周りの極太パンダ黒
+    beak: "#64748b",      // ダークグレーの薄細クチバシ
+    special: "#e2e8f0"    // 側面の繊細な銀波
+  },
+  "C108": { // アオジ (藪の中の歌い手)
+    template: TEMP_NORMAL,
+    main: "#854d0e",      // 黒褐色の縞
+    sub: "#eab308",       // 鮮やかな硫黄イエロー
+    beak: "#fbcfe8",      // 柔らかな淡肉クチバシ
+    special: "#16a34a"    // 顔のオリーブグリーン
+  },
+  "C109": { // チョウゲンボウ (静止の小隼)
+    template: TEMP_RAPTOR,
+    main: "#b45309",      // 赤レンガの背コート
+    sub: "#fed7aa",       // 薄褐色の胸斑
+    beak: "#94a3b8",      // ハヤブサ灰色のカギ鼻
+    special: "#eab308"    // 黄色いアイリングと蝋膜
+  },
+  "C110": { // ヤマセミ (清流の巨大主)
+    template: TEMP_RAPTOR,
+    main: "#0f172a",      // 濃スレートの精悍カラー
+    sub: "#ffffff",       // 白鹿の子の斑点模様
+    beak: "#334155",      // 鋭利な極太クチバシ
+    special: "#94a3b8"    // 銀色に逆立つ大きなトサカ
+  },
+  "C111": { // セグロセキレイ (日本の走者)
+    template: TEMP_NORMAL,
+    main: "#09090b",      // 漆黒のフルフェイスと背
+    sub: "#ffffff",       // 際立つ白眉と胸
+    beak: "#09090b",      // 針のごとき黒スレンダー嘴
+    special: "#cbd5e1"    // 白い大翼帯
+  },
+  "C112": { // コサメビタキ (巨眼の妖精)
+    template: TEMP_NORMAL,
+    main: "#94a3b8",      // 暖かみのある灰
+    sub: "#fafafa",       // 真っ白な胸元
+    beak: "#1e293b",      // 幅広の平たい捕虫嘴
+    special: "#ffffff"    // 際立つ白いウルトラアイリング
+  },
+  "C113": { // カワラヒワ (稲妻フラッシュ)
+    template: TEMP_NORMAL,
+    main: "#78350f",      // 焦茶のオーソドックス
+    sub: "#ca8a04",       // 羽ばたいた時に走る黄色い稲妻
+    beak: "#fbcfe8",      // 種割り用の肉ピンク巨大嘴
+    special: "#ca8a04"
+  },
+  "C114": { // オナガガモ (流麗スレンダー)
+    template: TEMP_LONG_BEAK,
+    main: "#451a03",      // 気品あるココアブラウンの頭
+    sub: "#ffffff",       // 胸から首サイドへ上る白線
+    beak: "#0284c7",      // 側面にライトブルーを走らせたクチバシ
+    special: "#64748b"    // 極細に伸びる黒いピン尾羽
+  },
+  "C115": { // ウミネコ (ミャーミャー海猫)
+    template: TEMP_LONG_BEAK,
+    main: "#334155",      // スレートグレーの堅い背羽
+    sub: "#ffffff",       // 水しぶきのように白いボディ
+    beak: "#eab308",      // 先端が赤と黒に染まる危険嘴
+    special: "#ef4444"    // 燃える真っ赤なアイリング
+  },
+  "C116": { // タゲリ (玉虫ポニー)
+    template: TEMP_NORMAL,
+    main: "#065f46",      // メタリックエメラルドグリーン
+    sub: "#ffffff",       // 白いほっぺと胸
+    beak: "#09090b",      // 可愛い黒細ビル
+    special: "#7c2d12"    // 下尾のオレンジと長く伸びるトサカ飾り
+  },
+  "C117": { // カイツブリ (ワープダイバー)
+    template: TEMP_NORMAL,
+    main: "#451a03",      // 濃いココアブラウン
+    sub: "#9a3412",       // ほのかな栗色の首筋
+    beak: "#fef08a",      // 口元のチャームイエロー（口角）
+    special: "#78350f"
+  },
+  "C118": { // コジュケイ (呼叫の達人)
+    template: TEMP_NORMAL,
+    main: "#b45309",      // 濃いオレンジ胸帯
+    sub: "#94a3b8",       // 渋い青灰色の首眉
+    beak: "#475569",
+    special: "#78350f"    // 斑点ドット
+  },
+  "C119": { // エナガ (睫毛のお姫様)
+    template: TEMP_NORMAL,
+    main: "#1e293b",      // チョーカーパターンの黒
+    sub: "#f8fafc",       // マシュマロ白フェイス
+    beak: "#09090b",      // 点のようなちいさな嘴
+    special: "#f472b6"    // アイシャドウのようなピンクまぶた
+  },
+  "C120": { // オオヨシキリ (大葦切の絶唱)
+    template: TEMP_LONG_BEAK,
+    main: "#a16207",      // 濃オリーブブラウン
+    sub: "#fef08a",       // クリームベージュ
+    beak: "#f43f5e",      // 口内が真っ赤に燃える大歌い手
+    special: "#e2e8f0"
+  },
+  "C121": { // ノスリ (電柱の哲学者)
+    template: TEMP_RAPTOR,
+    main: "#78350f",      // 優しいセピア褐色
+    sub: "#fef3c7",       // バニラクリーム腹斑
+    beak: "#1e293b",      // 猛禽の鉄色鼻
+    special: "#eab308"
+  },
+  "C122": { // クマタカ (角鷹・森の王)
+    template: TEMP_RAPTOR,
+    main: "#292524",      // 威風堂々の重厚カラー
+    sub: "#fbfbfb",       // 緻密な横縞の白腹
+    beak: "#1e293b",      // 鋼鉄のアンカーホック嘴
+    special: "#eab308"    // 黄金に輝く眼光と冠
+  },
+  "C123": { // ウミスズメ (水中ロケット)
+    template: TEMP_NORMAL,
+    main: "#1e293b",      // 藍スレート
+    sub: "#ffffff",       // 純白
+    beak: "#cbd5e1",      // 肉厚の短ビル
+    special: "#e2e8f0"    // 白い２本の髪飾りスジ（夏羽）
+  },
+  "C124": { // カササギ (勝ち烏の七夕)
+    template: TEMP_NORMAL,
+    main: "#09090b",      // カラスブラック
+    sub: "#ffffff",       // 純白お腹
+    beak: "#09090b",      // 硬質コバルトクチバシ
+    special: "#1d4ed8"    // 翼を飾る瑠璃の光
+  },
+  "C125": { // ギンザンマシコ (ハイマツの火達磨)
+    template: TEMP_NORMAL,
+    main: "#e11d48",      // 熟したラズベリーレッド
+    sub: "#ffffff",       // 白い２本の羽線
+    beak: "#57534e",      // 太いフィンチビル
+    special: "#fda4af"    // 薔薇色の胸
   }
 };
 

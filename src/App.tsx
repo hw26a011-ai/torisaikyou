@@ -350,8 +350,124 @@ export default function App() {
     return s ? parseInt(s, 10) : 0;
   });
 
+  const [totalPulls, setTotalPulls] = useState<number>(() => {
+    const s = localStorage.getItem("gacha_total_pulls");
+    if (s) return parseInt(s, 10);
+    const hist = localStorage.getItem("gacha_history");
+    if (hist) {
+      try {
+        const arr = JSON.parse(hist);
+        return Array.isArray(arr) ? arr.length : 0;
+      } catch { return 0; }
+    }
+    return 0;
+  });
+
+  const [totalUrCount, setTotalUrCount] = useState<number>(() => {
+    const s = localStorage.getItem("gacha_total_ur");
+    if (s) return parseInt(s, 10);
+    const hist = localStorage.getItem("gacha_history");
+    if (hist) {
+      try {
+        const arr = JSON.parse(hist);
+        return Array.isArray(arr) ? arr.filter((p: any) => p.rarity === Rarity.UR).length : 0;
+      } catch { return 0; }
+    }
+    return 0;
+  });
+
+  const [totalSsrCount, setTotalSsrCount] = useState<number>(() => {
+    const s = localStorage.getItem("gacha_total_ssr");
+    if (s) return parseInt(s, 10);
+    const hist = localStorage.getItem("gacha_history");
+    if (hist) {
+      try {
+        const arr = JSON.parse(hist);
+        return Array.isArray(arr) ? arr.filter((p: any) => p.rarity === Rarity.SSR).length : 0;
+      } catch { return 0; }
+    }
+    return 0;
+  });
+
+  const [totalSrCount, setTotalSrCount] = useState<number>(() => {
+    const s = localStorage.getItem("gacha_total_sr");
+    if (s) return parseInt(s, 10);
+    const hist = localStorage.getItem("gacha_history");
+    if (hist) {
+      try {
+        const arr = JSON.parse(hist);
+        return Array.isArray(arr) ? arr.filter((p: any) => p.rarity === Rarity.SR).length : 0;
+      } catch { return 0; }
+    }
+    return 0;
+  });
+
+  const [totalRCount, setTotalRCount] = useState<number>(() => {
+    const s = localStorage.getItem("gacha_total_r");
+    if (s) return parseInt(s, 10);
+    const hist = localStorage.getItem("gacha_history");
+    if (hist) {
+      try {
+        const arr = JSON.parse(hist);
+        return Array.isArray(arr) ? arr.filter((p: any) => p.rarity === Rarity.R).length : 0;
+      } catch { return 0; }
+    }
+    return 0;
+  });
+
   const [activeTab, setActiveTab] = useState<"summon" | "book" | "history" | "quests" | "battle">("summon");
   const [muted, setMuted] = useState<boolean>(() => getMuteState());
+
+  // --- BGM Integration ---
+  const bgmRef = React.useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // Create audio element for game BGM
+    const audio = new Audio("/The_Open_Window.mp3");
+    audio.loop = true;
+    audio.volume = 0.45; // balanced background sound levels
+    audio.muted = muted;
+    bgmRef.current = audio;
+
+    // Handles safe autoplay permissions across browsers by binding to the first user movement/click
+    const startPlay = () => {
+      audio.play().catch((err) => {
+        console.log("Audio autoplay bypass waiting for further user focus:", err);
+      });
+      // Cleanup to conserve overhead after firing once
+      window.removeEventListener("click", startPlay);
+      window.removeEventListener("keydown", startPlay);
+      window.removeEventListener("touchstart", startPlay);
+    };
+
+    window.addEventListener("click", startPlay);
+    window.addEventListener("keydown", startPlay);
+    window.addEventListener("touchstart", startPlay);
+
+    // Prompt initial instant playback triggers
+    audio.play().catch(() => {});
+
+    return () => {
+      window.removeEventListener("click", startPlay);
+      window.removeEventListener("keydown", startPlay);
+      window.removeEventListener("touchstart", startPlay);
+      audio.pause();
+      bgmRef.current = null;
+    };
+  }, []);
+
+  // Sync state mutation logs to running audio instance in real-time
+  useEffect(() => {
+    if (bgmRef.current) {
+      bgmRef.current.muted = muted;
+      if (!muted) {
+        bgmRef.current.play().catch(() => {});
+      }
+    }
+  }, [muted]);
+
+  // --- Auto Summon States ---
+  const [isAutoSummoning, setIsAutoSummoning] = useState<boolean>(false);
 
   // UI helpers
   const [selectedChar, setSelectedChar] = useState<Character | null>(null);
@@ -401,6 +517,22 @@ export default function App() {
     localStorage.setItem("gacha_claimed_quests", JSON.stringify(claimedQuests));
   }, [claimedQuests]);
 
+  useEffect(() => {
+    localStorage.setItem("gacha_total_pulls", totalPulls.toString());
+  }, [totalPulls]);
+  useEffect(() => {
+    localStorage.setItem("gacha_total_ur", totalUrCount.toString());
+  }, [totalUrCount]);
+  useEffect(() => {
+    localStorage.setItem("gacha_total_ssr", totalSsrCount.toString());
+  }, [totalSsrCount]);
+  useEffect(() => {
+    localStorage.setItem("gacha_total_sr", totalSrCount.toString());
+  }, [totalSrCount]);
+  useEffect(() => {
+    localStorage.setItem("gacha_total_r", totalRCount.toString());
+  }, [totalRCount]);
+
   const toggleSound = () => {
     const newMuted = toggleMute();
     setMuted(newMuted);
@@ -443,6 +575,13 @@ export default function App() {
     let newStarsGranted = 0;
     let newGoldGranted = 0;
 
+    let addedPulls = count;
+    let addedUr = 0;
+    let addedSsr = 0;
+    let addedSr = 0;
+    let addedR = 0;
+    const newHistoryItems: PullHistoryItem[] = [];
+
     const urPool = CHARACTERS.filter((c) => c.rarity === Rarity.UR);
     const ssrPool = CHARACTERS.filter((c) => c.rarity === Rarity.SSR);
     const srPool = CHARACTERS.filter((c) => c.rarity === Rarity.SR);
@@ -471,6 +610,16 @@ export default function App() {
         }
       }
 
+      if (rolledRarity === Rarity.UR) {
+        addedUr++;
+      } else if (rolledRarity === Rarity.SSR) {
+        addedSsr++;
+      } else if (rolledRarity === Rarity.SR) {
+        addedSr++;
+      } else {
+        addedR++;
+      }
+
       // Select character from rarity subclass
       let selectedPool = rPool;
       if (rolledRarity === Rarity.UR) selectedPool = urPool;
@@ -492,7 +641,10 @@ export default function App() {
         };
       } else {
         // Duplicate handling -> Convert to stats and grant 100 Mana Stars & 150 Gold!
-        updatedCollected[randomChar.id].duplicateCount += 1;
+        updatedCollected[randomChar.id] = {
+          ...updatedCollected[randomChar.id],
+          duplicateCount: updatedCollected[randomChar.id].duplicateCount + 1,
+        };
         newStarsGranted += 100;
         newGoldGranted += 150;
       }
@@ -510,19 +662,39 @@ export default function App() {
         rarity: randomChar.rarity,
         isNew: !alreadyOwned,
       };
-      
-      // Update state ledger in loop
-      setPullHistory((prev) => [historyItem, ...prev].slice(0, 50)); // limit history log visual to recent 50 entries
+      newHistoryItems.push(historyItem);
     }
+
+    // Update state ledger using batched items safely
+    setPullHistory((prev) => [...newHistoryItems.reverse(), ...prev].slice(0, 50));
 
     setManaStars((prev) => prev + newStarsGranted);
     setGold((prev) => prev + newGoldGranted);
     setCollectedChars(updatedCollected);
     setPityCount(currentPity);
 
+    // Update statistics counts in real-time
+    setTotalPulls((prev) => prev + addedPulls);
+    setTotalUrCount((prev) => prev + addedUr);
+    setTotalSsrCount((prev) => prev + addedSsr);
+    setTotalSrCount((prev) => prev + addedSr);
+    setTotalRCount((prev) => prev + addedR);
+
     // Launch beautiful summoning animations
     setCurrentResults(newResults);
     setShowAnimation(true);
+  };
+
+  // --- Auto Summon Engine ---
+  const handleStartAutoSummon = () => {
+    if (tickets < 10 && gems < 1500) return;
+    setIsAutoSummoning(true);
+    executeSummons(10);
+  };
+
+  const handleStopAutoSummon = () => {
+    setIsAutoSummoning(false);
+    playClick();
   };
 
 
@@ -649,21 +821,15 @@ export default function App() {
 
   // Statistics
   const statsSummary = useMemo(() => {
-    let totalPulls = pullHistory.length;
-    let urPulls = pullHistory.filter((p) => p.rarity === Rarity.UR).length;
-    let ssrPulls = pullHistory.filter((p) => p.rarity === Rarity.SSR).length;
-    let srPulls = pullHistory.filter((p) => p.rarity === Rarity.SR).length;
-    let rPulls = pullHistory.filter((p) => p.rarity === Rarity.R).length;
-
     return {
       totalPulls,
-      urCount: urPulls,
-      ssrCount: ssrPulls,
-      srCount: srPulls,
-      rCount: rPulls,
+      urCount: totalUrCount,
+      ssrCount: totalSsrCount,
+      srCount: totalSrCount,
+      rCount: totalRCount,
       pityTarget: 80,
     };
-  }, [pullHistory]);
+  }, [totalPulls, totalUrCount, totalSsrCount, totalSrCount, totalRCount]);
 
   const getElementBadgeIcon = (element: ElementType) => {
     switch (element) {
@@ -729,7 +895,7 @@ export default function App() {
               <Award className="w-3.5 h-3.5 text-indigo-500" />
               <div className="flex flex-col">
                 <span className="text-[7px] text-slate-400 font-bold leading-none">TOTAL SUMMON</span>
-                <span className="text-xs font-mono font-bold text-slate-700">{pullHistory.length} 回</span>
+                <span className="text-xs font-mono font-bold text-slate-700">{totalPulls} 回</span>
               </div>
             </div>
 
@@ -956,9 +1122,28 @@ export default function App() {
 
               </div>
 
+              {/* Auto Summon Button */}
+              <div className="w-full max-w-sm mt-3 z-10 animate-fade-in">
+                <button
+                  id="start-auto-summon-ui-btn"
+                  onClick={handleStartAutoSummon}
+                  disabled={tickets < 10 && gems < 1500}
+                  className="w-full py-3.5 px-4 rounded-xl font-bold text-xs bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-550 hover:to-teal-600 text-white disabled:opacity-45 disabled:cursor-not-allowed transition duration-150 shadow-md hover:shadow-emerald-500/15 flex flex-col items-center justify-center cursor-pointer border border-emerald-500/20"
+                >
+                  <span className="flex items-center gap-1.5 font-bold text-sm">
+                    <Sparkles className="w-4 h-4 text-yellow-300 animate-pulse" />
+                    自動連続召喚（10回連続ループ）
+                  </span>
+                  <div className="flex items-center gap-2 mt-1 text-[10px] text-emerald-100/90 font-semibold">
+                    <span>10回単位でリソース消費</span> • <span className="text-yellow-250 font-black">UR排出時に即自動停止</span>
+                  </div>
+                </button>
+              </div>
+
               {/* Pity tracker footer */}
-              <div className="mt-2 text-[10px] text-slate-400 font-mono z-10">
-                <span>天井カウンター: <strong className="text-slate-600">{pityCount} / 80</strong> (あと <strong className="text-emerald-600">{80 - pityCount}回</strong> で<strong className="text-amber-600 font-bold">UR確定</strong>)</span>
+              <div className="mt-2.5 text-[10px] text-slate-400 font-mono z-10 flex items-center justify-between w-full max-w-sm px-2 py-1.5 bg-slate-50 border border-slate-150/60 rounded-xl">
+                <span>天井カウント: <strong className="text-slate-600">{pityCount}</strong>/80 (あと <strong className="text-emerald-600">{80 - pityCount}回</strong>)</span>
+                <span className="text-slate-500">累計召喚数: <strong className="text-indigo-600 font-bold">{totalPulls}回</strong></span>
               </div>
 
             </div>
@@ -1246,17 +1431,27 @@ export default function App() {
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                   <History className="w-3.5 h-3.5 text-indigo-500" /> 最新召喚監査ログ <span className="font-mono text-slate-400 font-normal">(近年の履歴50件)</span>
                 </h4>
-                {pullHistory.length > 0 && (
+                {(pullHistory.length > 0 || totalPulls > 0) && (
                   <button 
                     onClick={() => {
-                      if(window.confirm("召喚履歴ログを消去しますか？（通貨や登録済図鑑はリセットされません）")) {
+                      if(window.confirm("召喚履歴ログおよびすべての統計情報を初期化しますか？（所持しているキャラや通貨、登録された図鑑情報はリセットされません）")) {
                         setPullHistory([]);
+                        setTotalPulls(0);
+                        setTotalUrCount(0);
+                        setTotalSsrCount(0);
+                        setTotalSrCount(0);
+                        setTotalRCount(0);
+                        localStorage.setItem("gacha_total_pulls", "0");
+                        localStorage.setItem("gacha_total_ur", "0");
+                        localStorage.setItem("gacha_total_ssr", "0");
+                        localStorage.setItem("gacha_total_sr", "0");
+                        localStorage.setItem("gacha_total_r", "0");
                         playClick();
                       }
                     }}
                     className="text-[9px] text-rose-500 hover:text-rose-700 border border-slate-200 bg-slate-50 px-2.5 py-1 font-bold rounded cursor-pointer transition shadow-xs"
                   >
-                    ログ消去
+                    履歴と統計のリセット
                   </button>
                 )}
               </div>
@@ -1423,12 +1618,15 @@ export default function App() {
           onComplete={() => {
             setShowAnimation(false);
             setCurrentResults([]);
+            setIsAutoSummoning(false); // アニメーション終了時にオート召喚ステートを解除
           }}
           onReSummon={(count) => {
             executeSummons(count);
           }}
           gems={gems}
           tickets={tickets}
+          isAuto={isAutoSummoning}
+          onStopAuto={handleStopAutoSummon}
         />
       )}
 
