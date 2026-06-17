@@ -102,8 +102,13 @@ export const GachaPullAnimation: React.FC<GachaPullAnimationProps> = ({
   // Portal automatic transition
   useEffect(() => {
     const timer = setTimeout(() => {
-      setPhase("reveal");
-      triggerCardReveal(0);
+      setPhase((currentPhase) => {
+        if (currentPhase === "portal") {
+          triggerCardReveal(0);
+          return "reveal";
+        }
+        return currentPhase;
+      });
     }, 1800); // 1.8s portal opening swirl
     return () => clearTimeout(timer);
   }, []);
@@ -207,10 +212,10 @@ export const GachaPullAnimation: React.FC<GachaPullAnimationProps> = ({
         <span className="text-sm font-mono text-neutral-500 tracking-wider font-semibold">
           SUMMONS PROCESS: {phase === "reveal" ? `${currentIndex + 1} / ${results.length}` : phase.toUpperCase()}
         </span>
-        {phase === "reveal" && (
+        {(phase === "portal" || phase === "reveal") && (
           <button
             onClick={skipAll}
-            className="flex items-center gap-1.5 px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 rounded-md text-xs transition duration-200"
+            className="flex items-center gap-1.5 px-3 py-1 bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 rounded-md text-xs transition duration-200 cursor-pointer"
           >
             スキップ (Skip) <Sparkles className="w-3.5 h-3.5" />
           </button>

@@ -1108,8 +1108,86 @@ export const CHARACTERS: Character[] = [
     baseAtk: 43,
     baseDef: 41,
     baseHp: 465,
-    description: "全体はオリーブ色を帯びた明るい褐色で、目の後ろにある白と黒のドット模様がチャームポイントのひょうきんな鳥。松林などをよく好み、地上を尾羽をチカチカと振りながら走り回り、危険を察知すると木の頂へピッピッと逃げ込みます。",
+    description: "全体はオリーブ色を帯びた明るい褐色で、目の後ろにある白と黒 of ドット模様がチャームポイントのひょうきんな鳥。松林などをよく好み、地上を尾羽をチカチカと振りながら走り回り、危険を察知すると木の頂へピッピッと逃げ込みます。",
     iconName: "Compass"
+  },
+  {
+    id: "C80",
+    name: "Kakapo: Kakapo",
+    jpTitle: "飛べない森の愛らしき巨漢オウム",
+    jpName: "カカポ",
+    rarity: Rarity.UR,
+    element: ElementType.TERRA,
+    baseAtk: 92,
+    baseDef: 100,
+    baseHp: 1100,
+    description: "ニュージーランド固有の飛べない世界唯一の大型夜行性オウム。丸々とした美しいモスグリーンの体に優しいつぶらな瞳、フクロウのような顔つきが特徴です。草木を器用によじ登り、人なつっこく愛嬌たっぷりです。",
+    iconName: "Shield"
+  },
+  {
+    id: "C81",
+    name: "Secretarybird: Hebikuiwashi",
+    jpTitle: "気高き長い美脚を持つ蛇狩りの闘士",
+    jpName: "ヘビクイワシ",
+    rarity: Rarity.UR,
+    element: ElementType.GALE,
+    baseAtk: 112,
+    baseDef: 65,
+    baseHp: 880,
+    description: "頭部の美しく長い飾り羽が「書記官のペン」に似ていることから名付けられた大型猛禽類。非常に長いスーパーモデルのような美脚を持ち、恐るべき俊敏なキックを必殺技としてコブラなどの獲物を仕留めます。",
+    iconName: "Sword"
+  },
+  {
+    id: "C82",
+    name: "Gouldian Finch: Kokinchou",
+    jpTitle: "七色にきらめく大自然が生んだ宝石",
+    jpName: "コキンチョウ",
+    rarity: Rarity.SSR,
+    element: ElementType.COSMOS,
+    baseAtk: 84,
+    baseDef: 70,
+    baseHp: 800,
+    description: "オーストラリア北部に生息する、信じられないほど鮮烈な七色の極彩色。赤、黄、緑、紫、コバルトブルーが完璧なグラデーションで配置され、南国の草原や林をきらびやかな色彩で照らします。",
+    iconName: "Sparkles"
+  },
+  {
+    id: "C83",
+    name: "Sulphur-crested Cockatoo: Kibatan",
+    jpTitle: "黄金のド派手な冠羽を持つ愉快な白オウム",
+    jpName: "キバタン",
+    rarity: Rarity.SR,
+    element: ElementType.COSMOS,
+    baseAtk: 76,
+    baseDef: 64,
+    baseHp: 680,
+    description: "全身の気高き純白の羽と、頭部にそびえる鮮やかなレモンイエローの大きな冠羽が目印。非常に賢く、歌に合わせてリズムよく踊ったり人の言葉を真似たりする、陽気で愛すべきエンターテイナーです。",
+    iconName: "Zap"
+  },
+  {
+    id: "C84",
+    name: "North Island Brown Kiwi: Kiiwi",
+    jpTitle: "長いクチバシを杖にする果物フォルム",
+    jpName: "キーウィ",
+    rarity: Rarity.R,
+    element: ElementType.TERRA,
+    baseAtk: 41,
+    baseDef: 45,
+    baseHp: 510,
+    description: "ニュージーランドの有名な国鳥。翼は完全に退化しており、もふもふの楕円形のコロンとした愛らしい体と長いストロー状の嘴が特徴。キウイフルーツにそっくりの質感を持つ夜の大地を走るアイドルです。",
+    iconName: "Compass"
+  },
+  {
+    id: "C85",
+    name: "Java Sparrow: Bunchou",
+    jpTitle: "白いお餅に映えるつややかな淡紅の嘴",
+    jpName: "文鳥",
+    rarity: Rarity.R,
+    element: ElementType.AQUA,
+    baseAtk: 43,
+    baseDef: 40,
+    baseHp: 480,
+    description: "つやつやと輝く淡紅の大きな嘴と、真っ白なふっくらしたほっぺが特徴。丸々ともちもちした優美な「大福餅」のような見た目をしており、お茶目で賢く、人の手にちょこんと乗って甘える甘えん坊です。",
+    iconName: "Heart"
   }
 ];
 

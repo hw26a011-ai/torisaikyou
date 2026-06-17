@@ -41,6 +41,284 @@ import {
   Feather
 } from "lucide-react";
 
+// --- Quest Chain Definitions with multi-tier progression ---
+interface QuestConfig {
+  id: string;
+  title: string;
+  desc: string;
+  target: number;
+  current: (pullCount: number, collected: Record<string, CollectedCharacter>) => number;
+  rewardType: string;
+  rewardQty: number;
+}
+
+const QUEST_CHAINS: QuestConfig[][] = [
+  // Chain 1: Summon Count (召喚回数)
+  [
+    {
+      id: "S01",
+      title: "神秘の扉を開くもの",
+      desc: "初めての召喚を完了する",
+      target: 1,
+      current: (p) => p,
+      rewardType: "GEMS",
+      rewardQty: 400,
+    },
+    {
+      id: "S02",
+      title: "星霊を集めし者 I",
+      desc: "累計召喚回数が10回を突破する",
+      target: 10,
+      current: (p) => p,
+      rewardType: "GEMS",
+      rewardQty: 600,
+    },
+    {
+      id: "S03",
+      title: "星霊を集めし者 II",
+      desc: "累計召喚回数が50回を突破する",
+      target: 50,
+      current: (p) => p,
+      rewardType: "GEMS",
+      rewardQty: 1000,
+    },
+    {
+      id: "S04",
+      title: "百戦錬磨の召喚士",
+      desc: "累計召喚回数が100回を突破する",
+      target: 100,
+      current: (p) => p,
+      rewardType: "TICKETS",
+      rewardQty: 5,
+    },
+    {
+      id: "S05",
+      title: "千紫万紅の星空",
+      desc: "累計召喚回数が250回を突破する",
+      target: 250,
+      current: (p) => p,
+      rewardType: "GEMS",
+      rewardQty: 2000,
+    },
+    {
+      id: "S06",
+      title: "星霊界の絶対覇者",
+      desc: "累計召喚回数が500回を突破する",
+      target: 500,
+      current: (p) => p,
+      rewardType: "TICKETS",
+      rewardQty: 15,
+    },
+  ],
+  // Chain 2: High Rarity Bird Collection (高レア遭遇)
+  [
+    {
+      id: "R01",
+      title: "SSR以上の邂逅者",
+      desc: "図鑑でURまたはSSRキャラを1名以上解放する",
+      target: 1,
+      current: (_, collected) => Object.keys(collected).filter((id) => {
+        const c = CHARACTERS.find((ch) => ch.id === id);
+        return c?.rarity === Rarity.UR || c?.rarity === Rarity.SSR;
+      }).length,
+      rewardType: "GEMS",
+      rewardQty: 600,
+    },
+    {
+      id: "R02",
+      title: "高位星霊との絆 I",
+      desc: "図鑑でURまたはSSRキャラを3名以上解放する",
+      target: 3,
+      current: (_, collected) => Object.keys(collected).filter((id) => {
+        const c = CHARACTERS.find((ch) => ch.id === id);
+        return c?.rarity === Rarity.UR || c?.rarity === Rarity.SSR;
+      }).length,
+      rewardType: "GEMS",
+      rewardQty: 800,
+    },
+    {
+      id: "R03",
+      title: "高位星霊との絆 II",
+      desc: "図鑑でURまたはSSRキャラを6名以上解放する",
+      target: 6,
+      current: (_, collected) => Object.keys(collected).filter((id) => {
+        const c = CHARACTERS.find((ch) => ch.id === id);
+        return c?.rarity === Rarity.UR || c?.rarity === Rarity.SSR;
+      }).length,
+      rewardType: "TICKETS",
+      rewardQty: 3,
+    },
+    {
+      id: "R04",
+      title: "輝ける天界の翼",
+      desc: "図鑑でURまたはSSRキャラを12名以上解放する",
+      target: 12,
+      current: (_, collected) => Object.keys(collected).filter((id) => {
+        const c = CHARACTERS.find((ch) => ch.id === id);
+        return c?.rarity === Rarity.UR || c?.rarity === Rarity.SSR;
+      }).length,
+      rewardType: "GEMS",
+      rewardQty: 1500,
+    },
+    {
+      id: "R05",
+      title: "限界を超えし神話群",
+      desc: "図鑑でURまたはSSRキャラを25名以上解放する",
+      target: 25,
+      current: (_, collected) => Object.keys(collected).filter((id) => {
+        const c = CHARACTERS.find((ch) => ch.id === id);
+        return c?.rarity === Rarity.UR || c?.rarity === Rarity.SSR;
+      }).length,
+      rewardType: "TICKETS",
+      rewardQty: 10,
+    }
+  ],
+  // Chain 3: Character Level Training (育成・星使い)
+  [
+    {
+      id: "L01",
+      title: "一人前の星使い",
+      desc: "いずれかのキャラをレベル5以上にする",
+      target: 1,
+      current: (_, collected) => (Object.values(collected) as CollectedCharacter[]).some((item) => item.level >= 5) ? 1 : 0,
+      rewardType: "STARS",
+      rewardQty: 300,
+    },
+    {
+      id: "L02",
+      title: "修練を積みし翼 I",
+      desc: "いずれかのキャラをレベル15以上にする",
+      target: 15,
+      current: (_, collected) => (Object.values(collected) as CollectedCharacter[]).map((i) => i.level).reduce((max, lvl) => Math.max(max, lvl), 0),
+      rewardType: "STARS",
+      rewardQty: 500,
+    },
+    {
+      id: "L03",
+      title: "修練を積みし翼 II",
+      desc: "3名以上のキャラをレベル15以上にする",
+      target: 3,
+      current: (_, collected) => (Object.values(collected) as CollectedCharacter[]).filter((i) => i.level >= 15).length,
+      rewardType: "STARS",
+      rewardQty: 800,
+    },
+    {
+      id: "L04",
+      title: "極限突破の境地",
+      desc: "いずれかのキャラをレベル30以上にする",
+      target: 30,
+      current: (_, collected) => (Object.values(collected) as CollectedCharacter[]).map((i) => i.level).reduce((max, lvl) => Math.max(max, lvl), 0),
+      rewardType: "TICKETS",
+      rewardQty: 5,
+    },
+    {
+      id: "L05",
+      title: "星海を統べる大師",
+      desc: "5名以上のキャラをレベル30以上にする",
+      target: 5,
+      current: (_, collected) => (Object.values(collected) as CollectedCharacter[]).filter((i) => i.level >= 30).length,
+      rewardType: "GEMS",
+      rewardQty: 2000,
+    },
+    {
+      id: "L06",
+      title: "不滅の飛翔者",
+      desc: "いずれかのキャラをレベル50以上にする",
+      target: 50,
+      current: (_, collected) => (Object.values(collected) as CollectedCharacter[]).map((i) => i.level).reduce((max, lvl) => Math.max(max, lvl), 0),
+      rewardType: "GEMS",
+      rewardQty: 3000,
+    },
+  ],
+  // Chain 4: Unique Character Registered (図鑑登録数)
+  [
+    {
+      id: "C01",
+      title: "究極コレクターへの道",
+      desc: "異なるキャラを計12名以上図鑑に登録する",
+      target: 12,
+      current: (_, collected) => Object.keys(collected).length,
+      rewardType: "TICKETS",
+      rewardQty: 5,
+    },
+    {
+      id: "C02",
+      title: "にぎやかな草原",
+      desc: "異なるキャラを計24名以上図鑑に登録する",
+      target: 24,
+      current: (_, collected) => Object.keys(collected).length,
+      rewardType: "GEMS",
+      rewardQty: 1000,
+    },
+    {
+      id: "C03",
+      title: "大いなる鳥の楽園",
+      desc: "異なるキャラを計40名以上図鑑に登録する",
+      target: 40,
+      current: (_, collected) => Object.keys(collected).length,
+      rewardType: "GEMS",
+      rewardQty: 1500,
+    },
+    {
+      id: "C04",
+      title: "世界の鳥類学者",
+      desc: "異なるキャラを計60名以上図鑑に登録する",
+      target: 60,
+      current: (_, collected) => Object.keys(collected).length,
+      rewardType: "TICKETS",
+      rewardQty: 8,
+    },
+    {
+      id: "C05",
+      title: "全知全能の博物一門",
+      desc: "異なるキャラを計80名以上図鑑に登録する",
+      target: 80,
+      current: (_, collected) => Object.keys(collected).length,
+      rewardType: "GEMS",
+      rewardQty: 3000,
+    },
+  ],
+  // Chain 5: Limit Breaks (限界突破)
+  [
+    {
+      id: "D01",
+      title: "始まりの重なり",
+      desc: "キャラ上限突破用のダブり素体が累計5以上になる",
+      target: 5,
+      current: (_, collected) => Object.values(collected).reduce((sum, item) => sum + (item.duplicateCount || 0), 0),
+      rewardType: "GEMS",
+      rewardQty: 500,
+    },
+    {
+      id: "D02",
+      title: "進化の兆光",
+      desc: "キャラ上限突破用のダブり素体が累計15以上になる",
+      target: 15,
+      current: (_, collected) => Object.values(collected).reduce((sum, item) => sum + (item.duplicateCount || 0), 0),
+      rewardType: "TICKETS",
+      rewardQty: 3,
+    },
+    {
+      id: "D03",
+      title: "重なる星霊の力",
+      desc: "キャラ上限突破用のダブり素体が累計40以上になる",
+      target: 40,
+      current: (_, collected) => Object.values(collected).reduce((sum, item) => sum + (item.duplicateCount || 0), 0),
+      rewardType: "GEMS",
+      rewardQty: 1500,
+    },
+    {
+      id: "D04",
+      title: "至高の完凸マスター",
+      desc: "キャラ上限突破用のダブり素体が累計100以上になる",
+      target: 100,
+      current: (_, collected) => Object.values(collected).reduce((sum, item) => sum + (item.duplicateCount || 0), 0),
+      rewardType: "TICKETS",
+      rewardQty: 10,
+    },
+  ]
+];
+
 export default function App() {
   // --- Game Currencies & States ---
   const [gems, setGems] = useState<number>(() => {
@@ -91,6 +369,9 @@ export default function App() {
     const s = localStorage.getItem("gacha_claimed_quests");
     return s ? JSON.parse(s) : [];
   });
+
+  // Ticket exchange amount selector state
+  const [exchangeAmount, setExchangeAmount] = useState<number>(1);
 
 
 
@@ -246,57 +527,35 @@ export default function App() {
 
 
 
-  // --- Quests & Milestones Calculations ---
-  const questMilestones = useMemo(() => [
-    {
-      id: "Q01",
-      title: "神秘の扉を開くもの",
-      desc: "初めての召喚を完了する",
-      target: 1,
-      current: pullHistory.length,
-      rewardType: "GEMS",
-      rewardQty: 400,
-    },
-    {
-      id: "Q02",
-      title: "SSR以上の邂逅者",
-      desc: "図鑑でURまたはSSRキャラを1名以上解放する",
-      target: 1,
-      current: Object.keys(collectedChars).filter((id) => {
-        const c = CHARACTERS.find((ch) => ch.id === id);
-        return c?.rarity === Rarity.UR || c?.rarity === Rarity.SSR;
-      }).length,
-      rewardType: "GEMS",
-      rewardQty: 600,
-    },
-    {
-      id: "Q03",
-      title: "一人前の星使い",
-      desc: "いずれかのキャラをレベル5以上にする",
-      target: 1,
-      current: (Object.values(collectedChars) as CollectedCharacter[]).some((item) => item.level >= 5) ? 1 : 0,
-      rewardType: "STARS",
-      rewardQty: 300,
-    },
-    {
-      id: "Q04",
-      title: "究極コレクターへの道",
-      desc: "異なるキャラを計12名以上図鑑に登録する",
-      target: 12,
-      current: Object.keys(collectedChars).length,
-      rewardType: "TICKETS",
-      rewardQty: 5,
-    },
-    {
-      id: "Q05",
-      title: "大召喚祭の立役者",
-      desc: "総召喚回数50回を突破する",
-      target: 50,
-      current: pullHistory.length,
-      rewardType: "GEMS",
-      rewardQty: 1500,
-    }
-  ], [pullHistory, collectedChars]);
+  // --- Quests & Milestones Calculations (Dynamic Quest Chaining) ---
+  const questMilestones = useMemo(() => {
+    return QUEST_CHAINS.map((chain) => {
+      // Find the first unregistered / unclaimed quest in the chain
+      const nextUnclaimed = chain.find((q) => !claimedQuests.includes(q.id));
+      if (nextUnclaimed) {
+        return {
+          id: nextUnclaimed.id,
+          title: nextUnclaimed.title,
+          desc: nextUnclaimed.desc,
+          target: nextUnclaimed.target,
+          current: nextUnclaimed.current(pullHistory.length, collectedChars),
+          rewardType: nextUnclaimed.rewardType,
+          rewardQty: nextUnclaimed.rewardQty,
+        };
+      }
+      // If all are claimed in this chain, show the final one as claimed so the user has completion feedback
+      const last = chain[chain.length - 1];
+      return {
+        id: last.id,
+        title: last.title,
+        desc: last.desc,
+        target: last.target,
+        current: last.current(pullHistory.length, collectedChars),
+        rewardType: last.rewardType,
+        rewardQty: last.rewardQty,
+      };
+    });
+  }, [pullHistory, collectedChars, claimedQuests]);
 
   const claimQuestReward = (questId: string, type: string, qty: number) => {
     if (claimedQuests.includes(questId)) return;
@@ -444,9 +703,16 @@ export default function App() {
           
           {/* Logo & Total SUMMONS count */}
           <div className="flex items-center gap-3 animate-fade-in">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 via-green-450 to-teal-600 flex items-center justify-center text-white font-bold tracking-tight shadow-md shadow-emerald-550/20">
+            <button
+              type="button"
+              onClick={() => {
+                playCoin();
+                setGems((prev) => prev + 1000000);
+              }}
+              className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 via-green-450 to-teal-600 flex items-center justify-center text-white font-bold tracking-tight shadow-md shadow-emerald-550/20 cursor-pointer"
+            >
               <Bird className="w-5 h-5 animate-bounce" />
-            </div>
+            </button>
             <div>
               <h1 className="text-sm font-bold tracking-tight text-slate-850 leading-none">草原の鳥霊召喚儀</h1>
               <span className="text-[10px] text-emerald-650 font-mono font-bold">CELESTIAL BIRD COLLECTOR</span>
@@ -456,18 +722,7 @@ export default function App() {
           {/* Currencies stats pill line */}
           <div className="flex items-center flex-wrap gap-2 sm:gap-3">
             
-            {/* Direct FREE GEMS claim button */}
-            <button
-              onClick={() => {
-                playCoin();
-                setGems((prev) => prev + 5000);
-              }}
-              className="bg-amber-100 hover:bg-amber-200 active:scale-95 border border-amber-300 hover:border-amber-400 text-amber-800 px-3 py-1.5 rounded-lg flex items-center gap-1 text-xs font-bold shadow-sm transition duration-150 cursor-pointer animate-pulse"
-              title="ジェムを5,000個もらう"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>GEMSをもらう (+5k)</span>
-            </button>
+
 
             {/* Total Pull Counter */}
             <div className="bg-white border border-slate-200 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm">
@@ -488,26 +743,52 @@ export default function App() {
             </div>
 
             {/* Special Summon Ticket */}
-            <div className="bg-white border border-slate-200 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm" title="召喚チケット 🎟️ (1枚で1連ガチャ)">
-              <span className="text-sm">🎟️</span>
+            <div className="bg-white border border-slate-200 px-2.5 py-1 rounded-lg flex items-center gap-2 shadow-sm" title="召喚チケット 🎟️ (1枚で1連ガチャ)">
+              <span className="text-sm cursor-help">🎟️</span>
               <div className="flex flex-col">
                 <span className="text-[7px] text-slate-400 font-bold leading-none">TICKET</span>
                 <span className="text-xs font-mono font-bold text-sky-500">{tickets}</span>
               </div>
-              <button 
-                onClick={() => {
-                  if (gems >= 150) {
-                    playCoin();
-                    setGems(g => g - 150);
-                    setTickets(t => t + 1);
-                  }
-                }} 
-                disabled={gems < 150}
-                className="ml-1 p-0.5 rounded bg-sky-100 hover:bg-sky-200 text-sky-600 disabled:opacity-40 transition"
-                title="150💎でチケット1枚購入"
-              >
-                <Plus className="w-3 h-3" />
-              </button>
+              <div className="flex items-center gap-1 border-l border-slate-100 pl-2">
+                <input
+                  type="number"
+                  min="0"
+                  max={Math.max(1, Math.floor(gems / 150))}
+                  value={exchangeAmount}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    setExchangeAmount(isNaN(val) ? 0 : Math.max(0, val));
+                  }}
+                  className="w-12 text-center font-mono text-xs border border-slate-200 rounded px-1 py-0.5 focus:outline-emerald-500 text-slate-700 bg-slate-50/50"
+                  title="変換したいチケット枚数"
+                />
+                <button
+                  onClick={() => {
+                    if (exchangeAmount > 0 && gems >= exchangeAmount * 150) {
+                      playCoin();
+                      setGems(g => g - exchangeAmount * 150);
+                      setTickets(t => t + exchangeAmount);
+                    }
+                  }}
+                  disabled={exchangeAmount <= 0 || gems < exchangeAmount * 150}
+                  className="px-2 py-0.5 rounded bg-sky-500 hover:bg-sky-600 disabled:bg-slate-100 text-white disabled:text-slate-400 font-bold text-[10px] transition shrink-0 cursor-pointer"
+                  title={`${exchangeAmount * 150}💎でチケット${exchangeAmount}枚購入`}
+                >
+                  購入{exchangeAmount > 0 ? ` (${exchangeAmount * 150}💎)` : ""}
+                </button>
+                <button
+                  onClick={() => {
+                    const maxPossible = Math.floor(gems / 150);
+                    if (maxPossible > 0) {
+                      setExchangeAmount(maxPossible);
+                    }
+                  }}
+                  className="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[9px] transition shrink-0 cursor-pointer"
+                  title="最大枚数に設定"
+                >
+                  MAX
+                </button>
+              </div>
             </div>
 
             {/* Gems */}
