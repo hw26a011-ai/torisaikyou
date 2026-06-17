@@ -1,0 +1,6 @@
+{
+  "name": "Gacha Collector",
+  "description": "A clean and tactile gacha pulling and character collection simulator.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
