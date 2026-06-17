@@ -1167,6 +1167,111 @@ const BIRD_STYLES: Record<string, {
     sub: "#ffffff",       // 純白のほっぺ
     beak: "#f87171",      // つやつやの桜色嘴
     special: "#ef4444"    // 紅いアイリング
+  },
+  "C86": { // ニシツノメドリ (アトランティック・パフィン)
+    template: TEMP_NORMAL,
+    main: "#1e293b",      // 黒い背中羽
+    sub: "#ffffff",       // マシュマロ白お腹
+    beak: "#f97316",      // 鮮烈なオレンジビル
+    special: "#facc15"    // 根元の黄色の輝き
+  },
+  "C87": { // ヒクイドリ (オーストラリア南部の主)
+    template: TEMP_RAPTOR,
+    main: "#09090b",      // 骨太な漆黒の胴毛
+    sub: "#2563eb",       // 青く光輝く首周り
+    beak: "#1e293b",      // 鋭利な鉄色クチバシ
+    special: "#ef4444"    // 真っ赤な肉垂(ダブル)
+  },
+  "C88": { // ゴシキセイガイインコ (ゴシキインコ)
+    template: TEMP_NORMAL,
+    main: "#1d4ed8",      // コバルトブルーの頭
+    sub: "#f97316",       // 燃え立つオレンジの胸
+    beak: "#dc2626",      // つやめく赤いクチバシ
+    special: "#22c55e"    // 鮮烈極まるグリーンの背
+  },
+  "C89": { // メンフクロウ (お面フクロウ)
+    template: TEMP_OWL,
+    main: "#ca8a04",      // 黄金色の背の斑文
+    sub: "#fcfaf2",       // 特徴的な白いハートお面
+    beak: "#fef08a",      // 黄灰色の柔らかな嘴
+    special: "#451a03"    // 深いブラウンの斑点
+  },
+  "C90": { // イワトビペンギン (崖登りパンクス)
+    template: TEMP_NORMAL,
+    main: "#18181b",      // 漆黒のタキシード
+    sub: "#ffffff",       // 純白の腹面
+    beak: "#ea580c",      // 濃いオレンジのつや嘴
+    special: "#fbbf24"    // 稲妻のような黄色い飾り羽
+  },
+  "C91": { // ベニイロフラミンゴ (フラミンゴクイーン)
+    template: TEMP_LONG_BEAK,
+    main: "#f43f5e",      // 深いローズピンク
+    sub: "#fce7f3",       // 淡いパステルピンクのグラデ
+    beak: "#1e293b",      // 先端が黒い大きな嘴
+    special: "#f43f5e"    // 脚の色
+  },
+  "C92": { // ワタリアホウドリ (世界最大翼)
+    template: TEMP_NORMAL,
+    main: "#ffffff",      // 純白の翼胴
+    sub: "#334155",       // 翼外側のチャコール
+    beak: "#fbcfe8",      // 桜色のソフトな大嘴
+    special: "#94a3b8"
+  },
+  "C93": { // オウギバト (世界一華麗なハト)
+    template: TEMP_NORMAL,
+    main: "#2563eb",      // 神秘のロイヤルブルー胴
+    sub: "#881337",       // ワインレッドの胸元
+    beak: "#475569",
+    special: "#60a5fa"    // 扇状にふくらむ水色の冠
+  },
+  "C94": { // ミヤマオウム (知性のいたずら屋ケア)
+    template: TEMP_NORMAL,
+    main: "#4d7c0f",      // オリーブグリーン
+    sub: "#ea580c",       // フライト時に見せる燃えるオレンジ
+    beak: "#1e293b",      // フック状の鋭いダーク嘴
+    special: "#facc15"
+  },
+  "C95": { // ウソ (冬の照紅雀)
+    template: TEMP_NORMAL,
+    main: "#64748b",      // 美しいスレートグレー
+    sub: "#fb7185",       // 喉を艶やかに染める照紅ピンク
+    beak: "#09090b",      // 漆黒の可愛いクチバシ
+    special: "#09090b"    // 黒いお帽子
+  },
+  "C96": { // イヌワシ (空の絶対皇帝)
+    template: TEMP_RAPTOR,
+    main: "#451a03",      // 勇猛な焦茶の羽
+    sub: "#d97706",       // 後頭部に光る金茶
+    beak: "#facc15",      // 獲物を引き裂く鋭い金黒嘴
+    special: "#d97706"
+  },
+  "C97": { // マメハチドリ (世界で一番小さな妖精)
+    template: TEMP_LONG_BEAK,
+    main: "#0d9488",      // メタリックエメラルド
+    sub: "#db2777",       // 鮮烈なマゼンタの喉
+    beak: "#09090b",      // ストロー状の極細黒嘴
+    special: "#38bdf8"
+  },
+  "C98": { // コトドリ (物真似のオーケストラ)
+    template: TEMP_NORMAL,
+    main: "#7c2d12",      // 深みのある赤褐色
+    sub: "#cbd5e1",       // レースのような上品な灰色飾り羽
+    beak: "#1e293b",
+    special: "#ea580c"
+  },
+  "C99": { // オシドリ (鴛鴦・錦の川鳥)
+    template: TEMP_NORMAL,
+    main: "#f59e0b",      // 艶やかなイチョウオレンジ
+    sub: "#4c1d95",       // 燦然と輝く高貴なる紫の胸
+    beak: "#f43f5e",      // 紅色の愛らしい嘴
+    special: "#10b981"    // グリーン冠羽
+  },
+  "C100": { // ハヤブサ (ギネス公認の音速弾)
+    template: TEMP_RAPTOR,
+    main: "#475569",      // 濃スレートグレーの細波模様
+    sub: "#f8fafc",       // 純白の胸
+    beak: "#facc15",      // 黄色く引き締まったアイリングと鼻
+    special: "#1e293b"    // ハヤブサ特有のトレードマーク「髭（チーク）」
   }
 };
 
