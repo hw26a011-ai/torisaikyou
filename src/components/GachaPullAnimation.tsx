@@ -440,9 +440,28 @@ export const GachaPullAnimation: React.FC<GachaPullAnimationProps> = ({
 
                   {/* Duplicate label */}
                   {!currentResult.isNew && (
-                    <div className="mt-4 py-1.5 px-3 bg-neutral-900/90 text-center rounded-lg border border-neutral-800 text-[10px] text-neutral-400 flex items-center justify-center gap-1">
-                      <RotateCcw className="w-3 h-3 text-emerald-400" />
-                      <span>獲得済: <strong className="text-emerald-400">マナ星 ✨ +100</strong></span>
+                    <div className="mt-4 py-2 px-3 bg-neutral-900/90 text-center rounded-lg border border-neutral-800 text-[10px] text-neutral-400 flex flex-col items-center justify-center gap-1.5">
+                      <div className="text-neutral-450 font-semibold flex items-center gap-1 text-[9px] uppercase tracking-wider">
+                        <RotateCcw className="w-2.5 h-2.5 text-emerald-400 animate-spin" style={{ animationDuration: "3s" }} /> 重複還元 (Duplicate Reward)
+                      </div>
+                      <div className="flex items-center justify-center gap-3 mt-0.5">
+                        <div className="flex items-center gap-1 text-slate-200 bg-neutral-950 px-2 py-0.5 rounded-md border border-neutral-800 font-mono text-xs font-bold shadow-inner">
+                          <span>✨</span>
+                          <span>✖100</span>
+                        </div>
+                        {currentResult.character.rarity === Rarity.UR && (
+                          <div className="flex items-center gap-1 text-amber-400 bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-500/20 font-mono text-xs font-bold shadow-inner">
+                            <span>🍁</span>
+                            <span>✖5</span>
+                          </div>
+                        )}
+                        {currentResult.character.rarity === Rarity.SSR && (
+                          <div className="flex items-center gap-1 text-amber-400 bg-amber-950/20 px-2 py-0.5 rounded-md border border-amber-500/10 font-mono text-xs font-bold shadow-inner">
+                            <span>🍁</span>
+                            <span>✖2</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                   {currentResult.isNew && (
@@ -480,6 +499,55 @@ export const GachaPullAnimation: React.FC<GachaPullAnimationProps> = ({
               </h2>
               <p className="text-xs text-neutral-400 mt-1">今回の召喚アルカナです。未所持キャラは自動的に図鑑に登録されます。</p>
             </div>
+
+            {/* Total Rewards Earned in this Summon */}
+            {(() => {
+              const pullCount = results.length;
+              const baseStars = pullCount * 100;
+              const baseGold = pullCount * 150;
+              
+              let duplicateStars = 0;
+              let duplicateLeaves = 0;
+              
+              results.forEach((r) => {
+                if (!r.isNew) {
+                  duplicateStars += 100;
+                  if (r.character.rarity === Rarity.UR) {
+                    duplicateLeaves += 5;
+                  } else if (r.character.rarity === Rarity.SSR) {
+                    duplicateLeaves += 2;
+                  }
+                }
+              });
+              
+              const totalStars = baseStars + duplicateStars;
+              const totalGold = baseGold;
+              const totalLeaves = duplicateLeaves;
+
+              return (
+                <div className="mb-5 p-3.5 bg-neutral-900 border border-neutral-800 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 max-w-xl w-full mx-auto shadow-md">
+                  <span className="text-xs font-bold text-neutral-400 tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: "3s" }} /> 獲得報酬の合計
+                  </span>
+                  <div className="flex items-center gap-3.5 flex-wrap justify-center">
+                    <div className="flex items-center gap-1 bg-neutral-950 px-2.5 py-1 rounded-lg border border-neutral-800 shadow-inner" title="ゴールド">
+                      <span className="text-sm">🪙</span>
+                      <span className="text-xs font-mono font-bold text-slate-200">✖{totalGold.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1 bg-neutral-950 px-2.5 py-1 rounded-lg border border-neutral-800 shadow-inner" title="マナスター">
+                      <span className="text-sm">✨</span>
+                      <span className="text-xs font-mono font-bold text-slate-200">✖{totalStars.toLocaleString()}</span>
+                    </div>
+                    {totalLeaves > 0 && (
+                      <div className="flex items-center gap-1 bg-amber-950/40 px-2.5 py-1 rounded-lg border border-amber-500/20 shadow-inner animate-pulse text-amber-300" title="金色の葉っぱ">
+                        <span className="text-sm">🍁</span>
+                        <span className="text-xs font-mono font-bold">✖{totalLeaves}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Grid of Results */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 overflow-y-auto max-h-[50vh] p-3 border border-neutral-900 bg-neutral-950/50 rounded-xl">
@@ -524,9 +592,25 @@ export const GachaPullAnimation: React.FC<GachaPullAnimationProps> = ({
                     </div>
 
                     {!result.isNew && (
-                      <div className="mt-2 text-[8px] text-neutral-400 font-mono bg-neutral-950/40 px-1 py-0.5 rounded flex items-center gap-0.5">
-                        <RotateCcw className="w-2.5 h-2.5 text-emerald-400" />
-                        <span>マナ ✨+100</span>
+                      <div className="mt-2.5 w-full flex flex-col gap-1 items-center bg-neutral-950/50 p-1.5 rounded-lg border border-neutral-850">
+                        <div className="text-[8px] text-neutral-500 flex items-center gap-0.5 scale-90">
+                          <RotateCcw className="w-2 h-2 text-emerald-400 animate-spin" style={{ animationDuration: "5s" }} /> 重複
+                        </div>
+                        <div className="flex flex-wrap items-center justify-center gap-1.5">
+                          <span className="text-[10px] font-mono text-neutral-300 flex items-center gap-0.5" title="マナスター">
+                            ✨<b>✖100</b>
+                          </span>
+                          {result.character.rarity === Rarity.UR && (
+                            <span className="text-[10px] font-mono text-amber-400 flex items-center gap-0.5" title="金色の葉っぱ">
+                              🍁<b>✖5</b>
+                            </span>
+                          )}
+                          {result.character.rarity === Rarity.SSR && (
+                            <span className="text-[10px] font-mono text-amber-400 flex items-center gap-0.5" title="金色の葉っぱ">
+                              🍁<b>✖2</b>
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
                   </motion.div>

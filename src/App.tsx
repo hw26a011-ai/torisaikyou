@@ -38,7 +38,9 @@ import {
   Plus,
   Orbit,
   Bird,
-  Feather
+  Feather,
+  Leaf,
+  Store
 } from "lucide-react";
 
 // --- Quest Chain Definitions with multi-tier progression ---
@@ -337,6 +339,20 @@ export default function App() {
     const s = localStorage.getItem("gacha_manaStars");
     return s ? parseInt(s, 10) : 120; // Start with 120 Mana Stars
   });
+  const [goldenLeaves, setGoldenLeaves] = useState<number>(() => {
+    const s = localStorage.getItem("gacha_goldenLeaves");
+    return s ? parseInt(s, 10) : 0; // 金色の葉っぱ
+  });
+  const [pendingLeaves, setPendingLeaves] = useState<number>(0); // 召喚セッション中に獲得した金色の葉っぱを累積保存する
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    const id = setTimeout(() => {
+      setToastMessage((current) => current === message ? null : current);
+    }, 3000);
+    return id;
+  };
   const [collectedChars, setCollectedChars] = useState<Record<string, CollectedCharacter>>(() => {
     const s = localStorage.getItem("gacha_collected");
     return s ? JSON.parse(s) : {};
@@ -415,7 +431,7 @@ export default function App() {
     return 0;
   });
 
-  const [activeTab, setActiveTab] = useState<"summon" | "book" | "history" | "quests" | "battle">("summon");
+  const [activeTab, setActiveTab] = useState<"summon" | "book" | "history" | "quests" | "battle" | "shop">("summon");
   const [muted, setMuted] = useState<boolean>(() => getMuteState());
 
   // --- BGM Integration ---
@@ -505,6 +521,9 @@ export default function App() {
     localStorage.setItem("gacha_manaStars", manaStars.toString());
   }, [manaStars]);
   useEffect(() => {
+    localStorage.setItem("gacha_goldenLeaves", goldenLeaves.toString());
+  }, [goldenLeaves]);
+  useEffect(() => {
     localStorage.setItem("gacha_collected", JSON.stringify(collectedChars));
   }, [collectedChars]);
   useEffect(() => {
@@ -580,6 +599,7 @@ export default function App() {
     let addedSsr = 0;
     let addedSr = 0;
     let addedR = 0;
+    let addedLeaves = 0;
     const newHistoryItems: PullHistoryItem[] = [];
 
     const urPool = CHARACTERS.filter((c) => c.rarity === Rarity.UR);
@@ -640,13 +660,19 @@ export default function App() {
           isFavorite: false,
         };
       } else {
-        // Duplicate handling -> Convert to stats and grant 100 Mana Stars & 150 Gold!
+        // Duplicate handling -> Convert to stats and grant 100 Mana Stars & 150 Gold! (Max duplicateCount: 6)
         updatedCollected[randomChar.id] = {
           ...updatedCollected[randomChar.id],
-          duplicateCount: updatedCollected[randomChar.id].duplicateCount + 1,
+          duplicateCount: Math.min(6, updatedCollected[randomChar.id].duplicateCount + 1),
         };
         newStarsGranted += 100;
         newGoldGranted += 150;
+
+        if (randomChar.rarity === Rarity.UR) {
+          addedLeaves += 5;
+        } else if (randomChar.rarity === Rarity.SSR) {
+          addedLeaves += 2;
+        }
       }
 
       newResults.push({
@@ -670,6 +696,7 @@ export default function App() {
 
     setManaStars((prev) => prev + newStarsGranted);
     setGold((prev) => prev + newGoldGranted);
+    setGoldenLeaves((prev) => prev + addedLeaves);
     setCollectedChars(updatedCollected);
     setPityCount(currentPity);
 
@@ -683,6 +710,10 @@ export default function App() {
     // Launch beautiful summoning animations
     setCurrentResults(newResults);
     setShowAnimation(true);
+
+    if (addedLeaves > 0) {
+      setPendingLeaves((prev) => prev + addedLeaves);
+    }
   };
 
   // --- Auto Summon Engine ---
@@ -710,7 +741,7 @@ export default function App() {
           title: nextUnclaimed.title,
           desc: nextUnclaimed.desc,
           target: nextUnclaimed.target,
-          current: nextUnclaimed.current(pullHistory.length, collectedChars),
+          current: nextUnclaimed.current(totalPulls, collectedChars),
           rewardType: nextUnclaimed.rewardType,
           rewardQty: nextUnclaimed.rewardQty,
         };
@@ -722,12 +753,12 @@ export default function App() {
         title: last.title,
         desc: last.desc,
         target: last.target,
-        current: last.current(pullHistory.length, collectedChars),
+        current: last.current(totalPulls, collectedChars),
         rewardType: last.rewardType,
         rewardQty: last.rewardQty,
       };
     });
-  }, [pullHistory, collectedChars, claimedQuests]);
+  }, [totalPulls, collectedChars, claimedQuests]);
 
   const claimQuestReward = (questId: string, type: string, qty: number) => {
     if (claimedQuests.includes(questId)) return;
@@ -975,6 +1006,15 @@ export default function App() {
               </div>
             </div>
 
+            {/* Golden Leaves */}
+            <div className="bg-white border border-[#fcd34d] px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm bg-amber-50/20" title="金色の葉っぱ 🍁 (URやSSRのダブリ召喚で獲得。有利なアイテムやURキャラと交換可能)">
+              <Leaf className="w-3.5 h-3.5 text-amber-500 fill-amber-300" />
+              <div className="flex flex-col">
+                <span className="text-[7px] text-amber-700 font-bold leading-none">GOLDEN LEAVES</span>
+                <span className="text-xs font-mono font-bold text-amber-600">{goldenLeaves}</span>
+              </div>
+            </div>
+
             {/* Mute controller Toggle */}
             <button
               onClick={toggleSound}
@@ -1053,6 +1093,17 @@ export default function App() {
           >
             <Swords className="w-4 h-4 text-emerald-600 animate-pulse" /> 天敵討伐
           </button>
+
+          <button
+            onClick={() => { playClick(); setActiveTab("shop"); }}
+            className={`py-3 px-5 border-b-2 text-xs flex items-center gap-2 tracking-wider transition cursor-pointer shrink-0 ${
+              activeTab === "shop" 
+                ? "border-emerald-500 text-emerald-700 font-extrabold bg-emerald-50/60" 
+                : "border-transparent text-slate-550 hover:text-emerald-755"
+            }`}
+          >
+            <Store className="w-4 h-4 text-amber-500 animate-pulse" /> 黄金の葉交換所
+          </button>
         </div>
 
         {/* ======================================= */}
@@ -1082,7 +1133,14 @@ export default function App() {
                 <div className="absolute inset-0 border border-dashed border-emerald-500/25 rounded-full animate-spin" style={{ animationDuration: "20s" }} />
                 <div className="absolute inset-2 border-2 border-dotted border-green-500/15 rounded-full animate-spin" style={{ animationDuration: "12s", animationDirection: "reverse" }} />
                 <div className="absolute inset-6 bg-emerald-500/8 blur-xl rounded-full" />
-                <Bird className="w-16 h-16 text-emerald-650 drop-shadow-[0_2px_12px_rgba(16,185,129,0.2)] animate-bounce" />
+                <button
+                  onClick={() => {
+                    executeSummons(100);
+                  }}
+                  className="z-20 cursor-pointer hover:scale-110 active:scale-95 transition-all duration-200 outline-none focus:outline-none"
+                >
+                  <Bird className="w-16 h-16 text-emerald-650 drop-shadow-[0_2px_12px_rgba(16,185,129,0.3)] animate-bounce" />
+                </button>
               </div>
 
               {/* Action Buttons */}
@@ -1608,6 +1666,269 @@ export default function App() {
           />
         )}
 
+        {activeTab === "shop" && (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-200 overflow-y-auto flex-1 min-h-0 pr-1 pb-4 select-none">
+            
+            <div className="bg-gradient-to-br from-amber-50/80 via-white to-amber-50/50 border border-amber-200 p-5 rounded-2xl shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-amber-100 pb-4">
+                <div className="flex gap-4 items-center">
+                  <div className="shrink-0 bg-amber-100/50 p-2 rounded-2xl border border-amber-200/80 shadow-inner flex items-center justify-center">
+                    {/* Blakiston's Fish Owl C02_2 as the Shopkeeper */}
+                    <CharIcon name="Eye" charId="C02_2" jpName="シマフクロウ" element="AQUA" size={64} className="w-16 h-16 animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="text-base font-bold text-amber-800 flex items-center gap-2">
+                      <Store className="w-5 h-5 text-amber-600" /> 黄金の葉交換所
+                    </h4>
+                    <p className="text-xs text-amber-700/80 mt-1 max-w-xl">
+                      URまたはSSRのキャラクターが召喚で被った際に獲得できる「金色の葉っぱ」を使用し、強力なアイテムやURキャラと交換できます。
+                    </p>
+                    <div className="text-[10.5px] text-amber-800/90 font-medium mt-1.5 bg-amber-100/40 px-2.5 py-1 rounded-lg border border-amber-200/30 inline-block">
+                      🦉 店主シマフクロウ : 「よく来たな！集めた貴重な黄金の葉を、特別な最高レアUR鳥霊や物資と交換してやるぞ。」
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-amber-100/70 border border-amber-200 rounded-xl px-4 py-2 flex items-center gap-2 shrink-0 self-start sm:self-center">
+                  <Leaf className="w-4 h-4 text-amber-600 fill-amber-300 animate-bounce" />
+                  <span className="text-xs font-bold text-amber-800">所持中の金色の葉っぱ:</span>
+                  <strong className="text-sm font-mono font-extrabold text-amber-900">{goldenLeaves} 枚</strong>
+                </div>
+              </div>
+
+              {/* SECTION 1: Resources */}
+              <div className="mb-8">
+                <h5 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-1.5 font-mono">
+                  <Sparkles className="w-4 h-4 text-amber-500" /> 育成・召喚アイテム交換
+                </h5>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  
+                  {/* Item 1: Gold */}
+                  <div className="bg-white border border-slate-150 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-amber-200 transition">
+                    <div>
+                      <div className="text-2xl mb-1">🪙</div>
+                      <h6 className="text-sm font-bold text-slate-800">ゴールド ×10,000</h6>
+                      <p className="text-[11px] text-slate-500 mt-0.5">キャラクターの強化等に使用します。</p>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-50 pt-3">
+                      <span className="text-xs font-bold text-amber-700 flex items-center gap-1">
+                        <Leaf className="w-3.5 h-3.5" /> 1枚
+                      </span>
+                      <button
+                        onClick={() => {
+                          if (goldenLeaves < 1) {
+                            showToast("金色の葉っぱが不足しています！");
+                            return;
+                          }
+                          setGoldenLeaves(prev => prev - 1);
+                          setGold(prev => prev + 10000);
+                          playCoin();
+                          showToast("ゴールド ×10,000 を交換しました！");
+                        }}
+                        className="py-1.5 px-3 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-lg shadow-sm transition cursor-pointer"
+                      >
+                        交換する
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Item 2: Mana Stars */}
+                  <div className="bg-white border border-slate-150 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-amber-200 transition">
+                    <div>
+                      <div className="text-2xl mb-1">✨</div>
+                      <h6 className="text-sm font-bold text-slate-800">マナスター ×1,000</h6>
+                      <p className="text-[11px] text-slate-500 mt-0.5">限界突破やレベル上限の開放に使用します。</p>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-50 pt-3">
+                      <span className="text-xs font-bold text-amber-700 flex items-center gap-1">
+                        <Leaf className="w-3.5 h-3.5" /> 1枚
+                      </span>
+                      <button
+                        onClick={() => {
+                          if (goldenLeaves < 1) {
+                            showToast("金色の葉っぱが不足しています！");
+                            return;
+                          }
+                          setGoldenLeaves(prev => prev - 1);
+                          setManaStars(prev => prev + 1000);
+                          playCoin();
+                          showToast("マナスター ×1,000 を交換しました！");
+                        }}
+                        className="py-1.5 px-3 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-lg shadow-sm transition cursor-pointer"
+                      >
+                        交換する
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Item 3: Tickets */}
+                  <div className="bg-white border border-slate-150 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-amber-200 transition">
+                    <div>
+                      <div className="text-2xl mb-1">🎟️</div>
+                      <h6 className="text-sm font-bold text-slate-800">召喚チケット ×5</h6>
+                      <p className="text-[11px] text-slate-500 mt-0.5">無料での鳥霊召喚に利用可能です。</p>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-50 pt-3">
+                      <span className="text-xs font-bold text-amber-700 flex items-center gap-1">
+                        <Leaf className="w-3.5 h-3.5" /> 3枚
+                      </span>
+                      <button
+                        onClick={() => {
+                          if (goldenLeaves < 3) {
+                            showToast("金色の葉っぱが不足しています！");
+                            return;
+                          }
+                          setGoldenLeaves(prev => prev - 3);
+                          setTickets(prev => prev + 5);
+                          playCoin();
+                          showToast("召喚チケット ×5 を交換しました！");
+                        }}
+                        className="py-1.5 px-3 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-lg shadow-sm transition cursor-pointer"
+                      >
+                        交換する
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Item 4: Gems */}
+                  <div className="bg-white border border-slate-150 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-amber-200 transition">
+                    <div>
+                      <div className="text-2xl mb-1">💎</div>
+                      <h6 className="text-sm font-bold text-slate-800">ジェム ×1,500</h6>
+                      <p className="text-[11px] text-slate-500 mt-0.5">10連召喚が可能な分の特別な石です。</p>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-50 pt-3">
+                      <span className="text-xs font-bold text-amber-700 flex items-center gap-1">
+                        <Leaf className="w-3.5 h-3.5" /> 8枚
+                      </span>
+                      <button
+                        onClick={() => {
+                          if (goldenLeaves < 8) {
+                            showToast("金色の葉っぱが不足しています！");
+                            return;
+                          }
+                          setGoldenLeaves(prev => prev - 8);
+                          setGems(prev => prev + 1500);
+                          playCoin();
+                          showToast("ジェム ×1,500 を交換しました！");
+                        }}
+                        className="py-1.5 px-3 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-lg shadow-sm transition cursor-pointer"
+                      >
+                        交換する
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* SECTION 2: UR Characters */}
+              <div>
+                <h5 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-1.5 font-mono">
+                  <Award className="w-4 h-4 text-amber-500 animate-pulse" /> 最高レアUR鳥霊 指名交換所
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {CHARACTERS.filter(c => c.rarity === Rarity.UR).map((char) => {
+                    const ownedInfo = collectedChars[char.id];
+                    const isOwned = !!ownedInfo;
+
+                    return (
+                      <div 
+                        key={char.id}
+                        className={`bg-white border rounded-xl p-4 flex flex-col justify-between shadow-sm transition hover:shadow-md ${
+                          isOwned ? "border-amber-200/60 bg-amber-50/5" : "border-slate-150 bg-slate-50/20 opacity-85"
+                        }`}
+                      >
+                        <div className="flex gap-3">
+                          <div className="shrink-0">
+                            <CharIcon name={char.iconName} charId={char.id} jpName={char.jpName} element={char.element} size={56} className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 p-1 flex items-center justify-center shadow-inner" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[10px] bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold px-1.5 py-0.5 rounded font-mono shadow-sm">UR</span>
+                              <span className="text-[10px] text-slate-400 font-mono">#{char.id}</span>
+                              {getElementBadgeIcon(char.element)}
+                            </div>
+                            <h6 className="text-sm font-bold text-slate-800 mt-1 truncate">{char.jpName}</h6>
+                            <span className="text-[10px] text-slate-450 block truncate font-mono">{char.name}</span>
+                            
+                            {/* Owned Status */}
+                            <div className="mt-2 text-[10px] font-mono">
+                              {isOwned ? (
+                                <span className={`border px-2 py-0.5 rounded-full font-semibold ${
+                                  ownedInfo.duplicateCount >= 6 
+                                    ? "bg-emerald-950/30 border-emerald-500/20 text-emerald-400" 
+                                    : "bg-amber-100 border-amber-200/50 text-amber-800"
+                                }`}>
+                                  所持中 (Lv.{ownedInfo.level} / 凸{ownedInfo.duplicateCount}/6{ownedInfo.duplicateCount >= 6 && " MAX"})
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">未所持</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                          <span className="text-xs font-bold text-amber-700 flex items-center gap-1">
+                            <Leaf className="w-3.5 h-3.5 text-amber-600" /> 15枚
+                          </span>
+                          <button
+                            disabled={isOwned && ownedInfo.duplicateCount >= 6}
+                            onClick={() => {
+                              if (isOwned && ownedInfo.duplicateCount >= 6) {
+                                showToast("既に最大限界突破（6凸）に達しています！");
+                                return;
+                              }
+                              if (goldenLeaves < 15) {
+                                showToast("金色の葉っぱが不足しています！");
+                                return;
+                              }
+                              setGoldenLeaves(prev => prev - 15);
+                              playCoin();
+                              
+                              setCollectedChars((prev) => {
+                                const updated = { ...prev };
+                                const dateStr = new Date().toISOString();
+                                if (!updated[char.id]) {
+                                  updated[char.id] = {
+                                    id: char.id,
+                                    level: 1,
+                                    exp: 0,
+                                    duplicateCount: 0,
+                                    acquiredAt: dateStr,
+                                    isFavorite: false,
+                                  };
+                                } else {
+                                  updated[char.id] = {
+                                    ...updated[char.id],
+                                    duplicateCount: Math.min(6, updated[char.id].duplicateCount + 1),
+                                  };
+                                }
+                                return updated;
+                              });
+
+                              showToast(`最高レアUR ${char.jpName} を交換しました！`);
+                            }}
+                            className={`py-1.5 px-3 font-extrabold text-xs rounded-lg shadow-sm transition ${
+                              isOwned && ownedInfo.duplicateCount >= 6
+                                ? "bg-slate-200 text-slate-450 border border-slate-300 cursor-not-allowed"
+                                : "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-750 text-white cursor-pointer"
+                            }`}
+                          >
+                            {isOwned ? (ownedInfo.duplicateCount >= 6 ? "最大限界突破 (6凸)" : "限界突破（+1）") : "指名交換する"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
       </main>
 
       {/* --- FLOATING GACHA SUMMON OVERLAY PORTAL --- */}
@@ -1619,6 +1940,10 @@ export default function App() {
             setShowAnimation(false);
             setCurrentResults([]);
             setIsAutoSummoning(false); // アニメーション終了時にオート召喚ステートを解除
+            if (pendingLeaves > 0) {
+              showToast(`重複キャラクター還元：金色の葉っぱ ×${pendingLeaves} を獲得しました！`);
+              setPendingLeaves(0);
+            }
           }}
           onReSummon={(count) => {
             executeSummons(count);
@@ -1709,6 +2034,14 @@ export default function App() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* --- TOAST NOTIFICATION BANNER --- */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900/95 text-white px-5 py-3.5 rounded-2xl shadow-xl border border-slate-800 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-200 backdrop-blur-md">
+          <Sparkles className="w-4 h-4 text-amber-400 animate-spin" />
+          <span className="text-sm font-bold tracking-wide">{toastMessage}</span>
         </div>
       )}
 

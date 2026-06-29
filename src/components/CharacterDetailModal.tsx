@@ -147,8 +147,8 @@ export const CharacterDetailModal: React.FC<CharacterDetailModalProps> = ({
               )}
             </div>
             {isUnlocked ? (
-              <div className="mt-2 text-xs text-neutral-400 font-mono bg-neutral-950 px-2 py-0.5 rounded-full">
-                所持ダブり: {duplicates} 個
+              <div className={`mt-2 text-xs font-mono bg-neutral-950 px-2.5 py-0.5 rounded-full ${duplicates >= 6 ? "text-emerald-400 font-bold" : "text-neutral-400"}`}>
+                限界突破 (凸数): {duplicates} / 6 {duplicates >= 6 && " (MAX)"}
               </div>
             ) : (
               <div className="mt-2 text-xs text-rose-500 font-mono font-medium">
